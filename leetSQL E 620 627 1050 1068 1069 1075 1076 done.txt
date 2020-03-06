@@ -1,0 +1,114 @@
+---620. Not Boring Movies
+---write by myself
+select id,movie, description, rating
+from cinema
+where (id%2) = 1 and description not in ('boring')
+order by rating desc
+
+---write by myself
+select id,movie, description, rating
+from cinema
+where mod(id,2)=1 and description != 'boring'
+order by rating desc
+
+
+---627. Swap Salary
+---write by myself
+update salary
+set 
+    sex = case when sex = 'f' then 'm' else 'f' end;
+	
+---solution
+UPDATE salary
+SET
+    sex = CASE sex
+        WHEN 'm' THEN 'f'
+        ELSE 'm'
+    END
+	
+---1050. Actors and Directors Who Cooperated At Least Three Times
+
+---wirte by myself
+select actor_id, director_id
+from
+(select actor_id,director_id,count(*)
+ from actordirector
+ group by 1,2
+ having count(*) >= 3) as t1
+ 
+ ---write by myself
+select actor_id,director_id
+from actordirector
+group by 1,2
+having count(*) >= 3
+ 
+---1068. Product Sales Analysis I
+--- write by myself
+select p.product_name,s.year,s.price
+from product p
+join sales s on p.product_id = s.product_id
+
+---1069. Product Sales Analysis II
+---write by myself
+select p.product_id,sum(s.quantity ) as total_quantity
+from product p
+join sales s on p.product_id = s.product_id
+group by 1;
+
+--- 1075. Project Employees I
+
+---write by myself
+select project_id,round(avg(e.experience_years),2) as average_years
+from project p
+join employee e on p.employee_id = e.employee_id 
+group by 1;
+
+--- 1076. Project Employees II
+--- solution
+
+select project_id
+
+from project
+
+group by 1
+
+having count(employee_id) = 
+
+            (select count(employee_id) as cnst from project 
+             group by project_id 
+             order by count(employee_id) desc
+             limit 1) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

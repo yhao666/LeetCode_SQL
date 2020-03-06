@@ -1,0 +1,152 @@
+---1173. Immediate Food Delivery I
+---1.write by myself, 不知道为啥报错se
+
+select count(a)/count(b)
+from 
+(select delivery_id as a
+from delivery 
+where order_date = customer_pref_delivery_date) as t1
+,
+(select delivery_id as b
+from delivery) as t2
+
+---第一个因为两个子句cross了，所以第一个是2行，第一个是6行，就变成了12行，a,b都是 delivery_id,相当于a等于b都是12，所以计算出的结果就是1
+---写成下面就对了
+select round(100*a/b,2) as immediate_percentage 
+from 
+(select count(delivery_id) as a from delivery where order_date = customer_pref_delivery_date) as t1
+,
+(select count(delivery_id) as b from delivery) as t2
+
+---2.write by myself ,不知道为啥报错。
+(select count(delivery_id)
+from delivery 
+where order_date = customer_pref_delivery_date)
+/
+(select count(delivery_id)
+from delivery)
+---第二个，要加个select 在最开始的位置，否则是两个数相除得到一个数，并没有select 出来，所以报错了。 改撑下面这样就对了
+select(round(
+    
+(select count(delivery_id) from delivery where order_date = customer_pref_delivery_date)
+/
+(select count(delivery_id) from delivery) * 100
+,2)
+) 
+as immediate_percentage
+
+---solution
+select round(sum(case when order_date = customer_pref_delivery_date then 1 else 0 end )/count(delivery_id)*100,2) as immediate_percentage  
+from delivery
+
+---1179. Reformat Department Table
+---自己没写出来
+---solution in discuss
+select id,
+       sum(case when month = 'Jan' then revenue end) as Jan_Revenue,
+       sum(case when month = 'Feb' then revenue end) as Feb_Revenue,
+       sum(case when month = 'Mar' then revenue end) as Mar_Revenue,
+       sum(case when month = 'Apr' then revenue end) as Apr_Revenue,
+       sum(case when month = 'May' then revenue end) as May_Revenue,
+       sum(case when month = 'Jun' then revenue end) as Jun_Revenue,
+       sum(case when month = 'Jul' then revenue end) as Jul_Revenue,
+       sum(case when month = 'Aug' then revenue end) as Aug_Revenue,
+       sum(case when month = 'Sep' then revenue end) as Sep_Revenue,
+       sum(case when month = 'Oct' then revenue end) as Oct_Revenue,
+       sum(case when month = 'Nov' then revenue end) as Nov_Revenue,
+       sum(case when month = 'Dec' then revenue end) as Dec_Revenue
+from department
+group by 1
+
+---discuss solution use if
+select id,
+       sum(if(month = 'Jan',revenue,null)) as Jan_Revenue,
+       sum(if(month = 'Feb',revenue,null)) as Feb_Revenue,
+       sum(if(month = 'Mar',revenue,null)) as Mar_Revenue,
+       sum(if(month = 'Apr',revenue,null)) as Apr_Revenue,
+       sum(if(month = 'May',revenue,null)) as May_Revenue,
+       sum(if(month = 'Jun',revenue,null)) as Jun_Revenue,
+       sum(if(month = 'Jul',revenue,null)) as Jul_Revenue,
+       sum(if(month = 'Aug',revenue,null)) as Aug_Revenue,
+       sum(if(month = 'Sep',revenue,null)) as Sep_Revenue,
+       sum(if(month = 'Oct',revenue,null)) as Oct_Revenue,
+       sum(if(month = 'Nov',revenue,null)) as Nov_Revenue,
+       sum(if(month = 'Dec',revenue,null)) as Dec_Revenue
+from department
+group by 1 
+
+
+--- 1211. Queries Quality and Percentage
+
+---write by myself
+select query_name,round(sum(rating/position)/count(*),2) as quality,
+round(100*sum(case when rating<3 then 1 else 0 end)/count(*),2) as poor_query_percentage 
+from queries
+group by 1
+
+---1241. Number of Comments per Post
+
+
+
+
+
+
+
+
+
+
+
+
+---1251. Average Selling Price
+
+---write by myself
+select p.product_id, 
+       round(
+       sum((case when u.purchase_date between p.start_date and p.end_date then p.price else 0 end)*u.units)
+       /       
+       sum((case when u.purchase_date between p.start_date and p.end_date then u.units else 0 end))
+       ,2)
+       as average_price          
+from prices p 
+join unitssold u on p.product_id  = u.product_id 
+group by 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

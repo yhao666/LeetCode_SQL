@@ -1,0 +1,129 @@
+---595. Big Countries
+---write by myself
+
+SELECT name, population,area
+FROM World
+where area > 3000000 or population >25000000
+
+---596. Classes More Than 5 Students
+---write by myself
+---第一次没写t2报错了，要注意有没有repeat 的 学生和课程记录。
+select class
+from (select class,count(*) 
+      from (select distinct student, class from courses) as t2 
+      group by 1
+      having count(*)>=5 ) as t1
+	  
+--- 597. Friend Requests I: Overall Acceptance Rate
+----我下面自己写的答案错了， 因为，count(*)之后，再在主语句里sum，最后还是sum了重复的，并没有去重复，白distinct了。
+select round(ifnull(sum(A.cnt1)/sum(B.cnt2),0),2) as accept_rate
+from
+(select distinct requester_id,accepter_id,count(*) as cnt1 from request_accepted group by 1,2) as A
+,(select distinct sender_id,send_to_id, count(*) as cnt2 from friend_request group by 1,2) as B
+
+---跟着参考答案重写的
+select
+round(
+    ifnull(
+    (select count(*) from (select distinct requester_id, accepter_id from request_accepted) as t1) 
+    /
+    (select count(*) from (select distinct sender_id, send_to_id from friend_request) as t2),0) 
+   
+, 2) as accept_rate;
+
+
+---603. Consecutive Available Seats
+---write by myself
+
+select t1.seat_id 
+from 
+(select seat_id from cinema where free = 1) as t1 
+join 
+(select seat_id from cinema where free = 1) as t2
+on t1.seat_id +1 = t2.seat_id
+ 
+union
+
+select t2.seat_id 
+from 
+(select seat_id from cinema where free = 1) as t1 
+join 
+(select seat_id from cinema where free = 1) as t2
+on t1.seat_id +1 = t2.seat_id
+
+order by seat_id ;
+
+--- solution
+select distinct a.seat_id
+from cinema a join cinema b
+  on abs(a.seat_id - b.seat_id) = 1
+  and a.free = true and b.free = true
+order by a.seat_id
+;
+
+---607. Sales Person
+
+---write by myself , but does not work,accepted but submit failed
+select distinct name
+from salesperson
+where sales_id not in
+(
+select distinct sp.sales_id
+from salesperson sp
+join orders ods on sp.sales_id = ods.sales_id
+join company cp on ods.com_id = cp.com_id and ods.com_id=1 where cp.name = 'RED') 
+
+---上面的改成下面就work了， 不能用ods.com_id =1 不知道为什么。
+select distinct name
+from salesperson
+where name not in
+(
+select distinct sp.name
+from salesperson sp
+join orders ods on sp.sales_id = ods.sales_id
+join company cp on ods.com_id = cp.com_id where cp.name = 'red') 
+
+----610. Triangle Judgement
+
+---write by myself
+
+select distinct
+       x,
+       y,
+       z,
+       if(x+y > z and x+z > y and z+y > x,'Yes','No') as triangle
+from triangle
+
+--- solution ,用的case when
+SELECT 
+    x,
+    y,
+    z,
+    CASE
+        WHEN x + y > z AND x + z > y AND y + z > x THEN 'Yes'
+        ELSE 'No'
+    END AS 'triangle'
+FROM
+    triangle
+;
+
+
+--613. Shortest Distance in a Line
+
+---write by myself
+select min(abs(p2.x-p1.x)) as shortest
+from point p1
+join point p2 on p1.x != p2.x
+
+---619. Biggest Single Number
+---write by myself
+select max(num) as num
+from 
+(
+select num, count(*) 
+from my_numbers 
+group by 1
+having count(*) < 2 
+) as t1
+
+

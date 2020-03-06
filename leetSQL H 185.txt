@@ -1,0 +1,15 @@
+185. Department Top Three Salaries
+---write by myself mysql
+
+select d.name as Department, e.name as employee, e.salary as salary
+from 
+(select distinct e1.departmentid,e1.salary
+from employee e1
+join 
+( select distinct departmentid, salary
+  from employee) as tp1
+on e1.salary <= tp1.salary and e1.departmentid = tp1.departmentid
+group by e1.id
+having count(tp1.salary) <= 3) as tp2
+join employee e on tp2.departmentid = e.departmentid and tp2.salary = e.salary
+join department d on e.departmentid = d.id

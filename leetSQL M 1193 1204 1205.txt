@@ -1,0 +1,160 @@
+1193. Monthly Transactions I
+---自己写的，下面是错的，可以run，但是submit错误，如果所有的数据都被declined,那tp2,tp4就会全是null，所以就没有任何tp2,tp4被选出来，结果就是空，因为tp1和tp3跟null join。
+select tp1.month,tp1.country,tp1.trans_count,tp2.approved_count,tp3.trans_total_amount,tp4.approved_total_amount   
+from 
+(
+select date_format(trans_date ,'%Y-%m' ) as month,
+       country,
+       count(state) as trans_count
+from transactions
+group by 1,2) as tp1
+join
+(select date_format(trans_date ,'%Y-%m' ) as month,
+       country,
+       count(state) as approved_count
+from transactions
+where state = 'approved'
+group by 1,2) as tp2 on tp1.month =tp2.month and tp1.country = tp2.country
+join
+(select date_format(trans_date ,'%Y-%m' ) as month,
+       country,
+       sum(amount) as trans_total_amount 
+from transactions
+group by 1,2
+) as tp3 on tp2.month =tp3.month and tp2.country = tp3.country
+join
+(select date_format(trans_date ,'%Y-%m' ) as month,
+       country,
+       sum(amount) as approved_total_amount 
+from transactions
+where state = 'approved'
+group by 1,2) as tp4 on tp3.month =tp4.month and tp3.country = tp4.country
+
+---自己想了半天，花了图写的，tp2 tp4用case when解决，就对了。
+
+select tp1.month,tp1.country,tp1.trans_count,tp2.approved_count,tp3.trans_total_amount,tp4.approved_total_amount   
+from 
+(
+select date_format(trans_date ,'%Y-%m' ) as month,
+       country,
+       count(state) as trans_count
+from transactions
+group by 1,2) as tp1
+join
+(select date_format(trans_date ,'%Y-%m' ) as month,
+        country,
+        sum(case when state = 'approved' then 1 else 0 end) as approved_count
+from transactions
+group by 1,2) as tp2 on tp1.month =tp2.month and tp1.country = tp2.country
+join
+(select date_format(trans_date ,'%Y-%m' ) as month,
+       country,
+       ifnull(sum(amount),0) as trans_total_amount 
+from transactions
+group by 1,2
+) as tp3 on tp2.month =tp3.month and tp2.country = tp3.country
+join
+(select date_format(trans_date ,'%Y-%m' ) as month, 
+        country,
+        sum(case when state = 'approved' then amount else 0 end) as approved_total_amount  
+from transactions
+group by 1,2) as tp4 on tp3.month =tp4.month and tp3.country = tp4.country
+
+---看了答案之后写的最简洁的solution
+
+select date_format(trans_date ,'%Y-%m') as month,
+       country,
+       count(state) as trans_count,
+       sum(case when state = 'approved' then 1 else 0 end) as approved_count,
+       sum(amount) as trans_total_amount,
+       sum(case when state = 'approved' then amount else 0 end) as approved_total_amount
+from transactions
+group by 1,2
+
+---1204. Last Person to Fit in the Elevator
+---看了答案后， write by myself mysql
+
+select person_name
+from queue 
+where turn = (select max(turn) from (
+                                    select q1.turn,sum(q2.weight) as max_weight
+                                    from queue q1
+                                    join queue q2 on q1.turn >= q2.turn
+                                    group by 1
+                                    having sum(q2.weight) <= 1000) as tp1
+              )
+
+--- ms sql, write by myself
+with tp1 as(
+select person_id,
+       person_name,
+       weight,
+       turn,
+       sum(weight) over (order by turn) as total_weight
+from queue
+
+)
+select top 1 person_name
+from tp1
+where total_weight <= 1000
+order by total_weight desc
+
+
+---1205. Monthly Transactions II
+---write by myself, 可以run。但是submit fail
+select tp2.month,
+       tp2.country,
+       (case when tp3.approved_count is not null then tp3.approved_count else 0 end) as approved_count,
+       (case when tp3.approved_amount is not null then tp3.approved_amount else 0 end) as approved_amount,
+       tp2.chargeback_count,
+       tp2.chargeback_amount
+from
+
+(select tp1.month,
+        tr.country,
+       count(tp1.trans_id) as chargeback_count,
+       sum(tr.amount) as chargeback_amount
+from 
+(select date_format(trans_date, '%Y-%m') as month,
+       trans_id
+from chargebacks
+group by 1) as tp1
+join transactions tr on tp1.trans_id = tr.id
+group by 1,2) as tp2
+
+left join 
+(select date_format(trans_date, '%Y-%m') as month,
+        country,
+        sum(case when state = 'approved' then 1 else 0 end) as approved_count,
+        sum(case when state = 'approved' then amount else 0 end) as approved_amount
+        from Transactions 
+        group by 1,2) as tp3 on tp2.month = tp3.month 
+
+
+---参考答案 一定要union all, union 不行。union all 是因为chargeback 和 transactions join完，也许有重复的行，
+  就是说，在同一个月，同一个country，有chargeback,但是只是日期和id不同，日期不同，但是在同一个月，month就会显示一样。
+  如果只用union，就会去掉不该去的。所以必须用union all. 
+
+select month,
+       country,
+       sum(case when state = 'approved' then 1 else 0 end) as approved_count,
+       sum(case when state = 'approved' then amount else 0 end) as approved_amount,
+       sum(case when state = 'chargebacks' then 1 else 0 end) as chargeback_count,
+       sum(case when state = 'chargebacks' then amount else 0 end) as chargeback_amount
+from( 
+select date_format(trans_date, '%Y-%m') as month,
+       country,
+       state,
+       amount
+from transactions
+where state = 'approved'
+union all
+select date_format(ch.trans_date,'%Y-%m') as month,
+       tr.country,
+       'chargebacks' as state,
+       tr.amount
+from chargebacks ch
+join transactions tr on ch.trans_id = tr.id) as tp1
+group by 1,2
+
+

@@ -1,0 +1,155 @@
+---574. Winning Candidate
+---write by myself MS SQL
+with cte1 as(
+select candidateid, count(candidateid) as cnst
+from vote
+group by candidateid  
+)
+
+select name 
+from Candidate
+where id =
+(select candidateid
+from cte1
+where cnst = (select max(cnst) from cte1))
+
+---write by myself mysql
+select name
+from candidate c
+where c.id = (select candidateid from
+(
+select candidateid, count(candidateid) as cnst
+from vote
+group by 1
+order by count(candidateid) desc
+limit 1) as t1) 
+
+---write by myself mysql
+select name
+from candidate c
+join 
+(select candidateid, count(candidateid) as cnst
+from vote
+group by 1
+order by count(candidateid) desc
+limit 1) as t1
+on c.id = t1.candidateid
+
+---578. Get Highest Answer Rate Question
+---write by myself mysql
+select question_id as survey_log
+from(
+select question_id,
+       sum(case when action = 'answer' then 1 else 0 end)
+       /
+       sum(case when action = 'show' then 1 else 0 end) as rate
+       
+from survey_log
+group by 1
+order by rate desc
+limit 1
+) as t1
+
+
+---580. Count Student Number in Departments
+---mysql write by myself
+select d.dept_name,count(s.student_id) as student_number 
+from department d
+left join student s on s.dept_id =  d.dept_id
+group by d.dept_name
+order by student_number desc,d.dept_name
+
+
+---585. Investments in 2016
+   
+---mysql from solution, in  后面只能有一个字段，所以如果写 in (select tiv_2015, count(*) from .......会报错 Operand should contain 1 column(s)
+select sum(tiv_2016) as tiv_2016
+from insurance
+where tiv_2015 in (select tiv_2015 from insurance group by tiv_2015 having count(*)>1)
+and (lat,lon) in (select lat,lon from insurance group by lat,lon having count(*) = 1)
+
+
+
+---602. Friend Requests II: Who Has the Most Friends
+---mysql write by myself,  开始写成了count(cnst),结果就错了，一定要注意什么时候用sum，什么时候用count
+
+select id, sum(cnst) as num
+from
+(
+select requester_id as id, count(requester_id) as cnst
+from request_accepted
+group by requester_id
+union all
+select accepter_id as id,count(accepter_id) as cnst
+from request_accepted
+group by accepter_id) as temp1
+group by id
+Order by num desc
+limit 1
+
+---608. Tree Node
+---mysql solution 
+select id,
+       case when p_id is null then 'Root'
+            when id in (select p_id from tree ) then 'Inner'
+            else 'Leaf' end as type
+            
+from tree
+order by id
+
+---mysql by myself, 运行的很慢
+select id,
+       if(p_id is null,'Root',
+             case when id in (select p_id from tree ) then 'Inner'
+                  else  'Leaf' end )as type
+            
+from tree
+order by id
+
+---mysql by myself
+select t.id,
+       if(t.p_id is not null,
+          case when tp.cnst = 0 then 'Leaf'
+                else 'Inner' end,
+          'Root') as type      
+from tree t 
+join (
+select t1.id, count(t2.p_id) as cnst
+from tree t1
+left join tree t2 on t1.id = t2.p_id 
+group by t1.id
+
+) as tp  on t.id = tp.id
+
+---mysql by myself
+select t.id,
+       if(t.p_id is not null,
+          case when tp.cnst = 0 then 'Leaf'
+               when tp.cnst = 2 or tp.cnst =1 then 'Inner'
+               end,
+          'Root') as type 
+      
+from tree t 
+join (
+select t1.id, count(t2.p_id) as cnst
+from tree t1
+left join tree t2 on t1.id = t2.p_id 
+group by t1.id
+
+) as tp  on t.id = tp.id
+
+---612. Shortest Distance in a Plane
+
+---write by myself
+select min(distance) as shortest
+from(
+select round(sqrt(power((p1.x-p2.x),2) + power((p1.y-p2.y),2)),2) as distance
+from point_2d p1
+join point_2d p2 on (p1.x,p1.y) != (p2.x,p2.y)
+) as temp1
+
+
+
+
+
+

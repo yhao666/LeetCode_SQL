@@ -1,0 +1,153 @@
+1112. Highest Grade For Each Student
+
+---write by myself mysql
+
+select e.student_id,min(e.course_id) as course_id,e.grade
+from enrollments e
+join
+(
+select student_id,max(grade) as grade
+from enrollments
+group by 1) as tp1 on e.student_id = tp1.student_id and e.grade = tp1.grade
+group by 1,3
+order by 1
+
+---write by myself ms sql, use window function
+
+select student_id,course_id,grade
+from(
+select student_id,
+       course_id,
+       grade,
+       row_number() over (partition by student_id order by grade desc, course_id asc ) as rnum
+from enrollments) as tp1
+where rnum = 1
+order by student_id
+
+---write by myself ms sql,use with clause and window function
+
+with cte as(
+select student_id,
+       course_id,
+       grade,
+       row_number() over (partition by student_id order by grade desc, course_id asc ) as rnum
+from enrollments
+)
+
+
+select student_id,course_id,grade
+from cte
+where rnum = 1
+order by student_id
+
+---1126. Active Businesses
+---mysql write by myself
+
+select e.business_id
+from events e
+join
+(
+select event_type,sum(occurences)/count(occurences) as average
+from events
+group by event_type) as tp1 on e.event_type =tp1.event_type and e.occurences > tp1.average
+group by e.business_id
+having count(e.event_type) > 1
+
+---1132. Reported Posts II
+
+---mysql 根据参考答案做的
+
+select round(100*sum(percentage)/count(action_date),2) as average_daily_percent 
+from(
+select action_date,count(remove_date)/count(post_id) as percentage
+from(
+select distinct a.post_id, a.action_date,r.remove_date
+from actions a
+left join removals r on a.post_id = r.post_id
+where a.extra = 'spam') as tp1
+group by action_date) as tp2
+
+---1149. Article Views II
+---write by myself , count(tp1.article_id) 也可以换成 count(*), viewed more than one article 也可以是看自己的。
+
+select distinct tp1.viewer_id as id
+from(
+select  distinct view_date,article_id,author_id,viewer_id
+from views
+) as tp1
+group by tp1.view_date,tp1.viewer_id
+having count(tp1.article_id) > 1
+order by 1
+
+
+---1158. Market Analysis I
+--mysql write by myself 
+
+select u.user_id as buyer_id, 
+       u.join_date,
+       ifnull(count(o.order_id),0) as orders_in_2019
+from users u
+left join orders o on u.user_id = o.buyer_id and year(o.order_date) = 2019
+group by 1,2
+
+---1164. Product Price at a Given Date
+---write by myself mysql
+
+select p.product_id,
+       p.new_price as price
+       
+from products p
+join
+(select product_id,
+       max(change_date) as lastest_date
+from products
+where change_date <= '2019-8-16'
+group by 1) as tp1
+on p.product_id = tp1.product_id and p.change_date = tp1.lastest_date
+
+union
+
+select distinct product_id, 10 as price
+from products
+where product_id not in (select distinct product_id from products where change_date <= '2019-8-16')
+
+---1174. Immediate Food Delivery II
+--- can run ,but fail in submit, 跟方正武讨论一个半小时，没太明白，应该是因为group by 后面 一定要跟 aggregation function 以外的所有字段。
+select round(100*
+       sum(case when order_date = customer_pref_delivery_date then 1 else 0 end)
+       /
+       count(*)
+       ,2)
+       as immediate_percentage 
+from(
+select delivery_id,customer_id,min(order_date) as order_date,customer_pref_delivery_date
+from delivery
+group by customer_id) as tp1
+
+--- 参考答案，然后写出来的。
+
+select round(100*
+       sum(case when order_date = customer_pref_delivery_date then 1 else 0 end)
+       /
+       count(*)
+       ,2)
+       as immediate_percentage 
+from delivery
+where (customer_id,order_date) in (select customer_id,min(order_date)
+                                   from delivery
+                                   group by 1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

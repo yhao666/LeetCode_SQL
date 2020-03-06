@@ -1,0 +1,121 @@
+1212. Team Scores in Football Tournament
+---write by myself mysql
+
+select team_id, team_name, sum(point) as num_points
+from (
+select t.team_id,t.team_name,
+       sum(case when m.host_goals > m.guest_goals then 3
+                        when m.host_goals = m.guest_goals then 1
+                        else 0 end) as point
+from teams t
+left join matches m on t.team_id = m.host_team
+group by 1,2
+
+union all 
+
+select t.team_id,t.team_name,
+       sum(case when m.guest_goals > m.host_goals then 3
+                        when m.guest_goals = m.host_goals then 1
+                        else 0 end) as point
+from teams t
+left join matches m on t.team_id = m.guest_team    
+group by 1,2) as tp1
+group by 1,2
+order by num_points desc,team_id asc
+
+1264. Page Recommendations
+--- mysql write by myself
+
+select page_id as recommended_page
+from(
+select distinct page_id 
+from likes
+where user_id in (select user2_id from friendship where user1_id = 1) 
+      or user_id in (select user1_id from friendship where user2_id =1) 
+)as tp1
+where page_id not in (select page_id from likes where user_id = 1)
+
+
+
+1270. All People Report to the Given Manager
+---mysql write by myself
+(
+select employee_id from employees where manager_id = 1 and employee_id != 1
+)
+union
+(
+select employee_id
+from employees
+where manager_id in (select employee_id from employees where manager_id = 1 and employee_id != 1)
+)
+union
+(
+select employee_id
+from employees where manager_id in 
+(select employee_id
+from employees
+where manager_id in (select employee_id from employees where manager_id = 1 and employee_id != 1))
+)
+
+
+1285. Find the Start and End Number of Continuous Ranges
+
+--- 直接看的答案，自己写不出来
+---mysql
+
+select L1.log_id as START_ID, min(L2.log_id) as END_ID
+from 
+	(select log_id from Logs 
+	where log_id-1 not in (select log_id from Logs)) L1,
+	(select log_id from Logs 
+	where log_id+1 not in (select log_id from Logs)) L2
+where L1.log_id <= L2.log_id
+group by L1.log_id
+
+---mysql
+Using cross join and group by to get group label where label defined as
+[how many numbers are greater than or euqal to itself - itself]
+And for each label group, we take min and max log_id as start_id and end_id respectively.
+
+Take 1,2,3,7,8,10 for example.
+Group 1 has 1 identities >= itself, then we take 1-1 =0 as label.
+Group 2 has 2 identities >= itself, then we take 2-2 =0 as label.
+Group 3 has 3 identities >= itself, then we take 3-3 =0 as label.
+Group 7 has 4 identities >= itself, then we take 4-7 =-3 as label.
+Group 8 has 5 identities >= itself, then we take 5-8 =-3 as label.
+Group 10 has 6 identities >= itself, then we take 6-10 =-4 as label.
+Then we group by label and take min and max log_id as start_id and end_id respectively.
+
+SELECT min(a.log_id) as START_ID, max(a.log_id) as END_ID
+FROM
+(
+SELECT l1.log_id, (SUM(IF(l1.log_id-l2.log_id>=0,1,0))-l1.log_id) as label
+FROM Logs l1
+CROSS JOIN Logs l2
+GROUP BY l1.log_id
+) as a
+GROUP BY a.label
+ORDER BY 1
+
+---MS SQL
+
+SELECT min(log_id) as start_id, max(log_id) as end_id
+FROM
+(SELECT log_id, ROW_NUMBER() OVER(ORDER BY log_id) as num
+FROM Logs) a
+GROUP BY log_id - num
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

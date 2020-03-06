@@ -1,0 +1,69 @@
+---1280. Students and Examinations
+---mysql
+
+select tp1.student_id,tp1.student_name,tp1.subject_name, ifnull(tp2.attended_exams,0) as attended_exams
+from
+(select *
+from students 
+cross join subjects) as tp1
+left join (select student_id,subject_name,count(*) as attended_exams
+           from examinations 
+           group by 1,2) as tp2
+on tp1.student_id = tp2.student_id and tp1.subject_name = tp2.subject_name
+order by student_id,subject_name
+
+
+1294. Weather Type in Each Country
+---write by myself mysql
+
+select c.country_name,
+       (case when tp1.avg >= 25 then 'Hot'
+            when tp1.avg <= 15 then 'Cold'
+            when 15 < tp1.avg < 25 then 'Warm' end) as weather_type
+from countries c
+join (select country_id, round(sum(weather_state)/count(day),3) as avg 
+      from weather
+      where month(day) = 11
+      group by country_id) as tp1
+on c.country_id = tp1.country_id 
+
+
+
+181. Employees Earning More Than Their Managers
+
+---write by myself, first try used distinct e1.name, can run, but failed to submit, then use only e1.name , 
+---then can submit successful, it should because of the name, for example, it has name like 'y' and 'Y',
+--- distinct will consider them as the same name, but they are different in this case
+--- I tried select 'y' != 'Y', it gave the output 0, and tried select 'y' = 'Y', it gave the output 1
+
+select e1.name as employee
+from employee e1
+join employee e2 on e1. managerid = e2.id and e1.salary > e2.salary
+
+182. Duplicate Emails
+---mysql write by myself 
+select email
+from
+(
+select email,count(email) as num
+from person
+group by email) as tp1
+where tp1.num >= 2
+
+---write by myself , wrote before
+
+SELECT DISTINCT P1.Email AS Email
+FROM Person P1
+JOIN Person P2 ON P1.Email = P2.Email and P1.Id != P2.Id;
+
+183. Customers Who Never Order
+---mysql write by myself
+
+select name as customers
+from customers
+where id not in
+(
+select distinct c.id
+from orders o
+join customers c
+where o.customerid = c.id)

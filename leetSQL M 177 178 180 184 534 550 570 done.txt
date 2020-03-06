@@ -1,0 +1,167 @@
+---177. Nth Highest Salary
+---write by myself
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+set N = N-1;
+  RETURN (
+      # Write your MySQL query statement below.
+      select distinct IF(salary is not null,salary,null) 
+      from employee
+      order by salary desc
+      limit 1 offset N
+  );
+END
+
+--- write by myself mysql second time
+
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+set N = N-1;
+  RETURN (
+      # Write your MySQL query statement below.
+      
+      select ifnull((select distinct salary 
+      from employee 
+      order by salary desc 
+      limit 1 offset N), null) 
+      
+  );
+END
+
+
+---178. Rank Scores
+---use dense_rank () over, use MS SQL 
+select score,
+       dense_rank () over (order by score desc) as rank
+from scores
+
+--- use mysql
+
+---solution in discuss
+select s1.score, count(s2.score) as rank
+from scores s1
+join (select distinct score from scores) as s2
+on s1.score <= s2.score
+group by s1.id
+order by s1.score desc
+
+---180. Consecutive Numbers
+---write by myself, do not forget distinct
+select distinct l1.num as ConsecutiveNums
+from logs l1
+join logs l2 on l1.id + 1 = l2.id and l1.num = l2.num
+join logs l3 on l2.id + 1 = l3.id and l2.num = l3.num
+
+
+---184. Department Highest Salary    
+---must pay attention that both the id and salary are the same for join limitation, 
+---may have same highest salary in two department.              
+---write by myself , MS SQL
+with temp1 as(
+select d.id,d.name,max(e.salary) as salary
+from department d 
+join employee e 
+on d.id = e.departmentid
+group by d.id,d.name
+
+)
+
+select t1.name as department,e.name as employee,e.salary
+from temp1 t1 join employee e
+on t1.id = e.departmentid
+where e.salary = t1.salary
+
+---write by myself, mysql, use employee table join subquery table
+select t1.name as department, e.name as employee,e.salary
+from employee e
+join
+(select d.id,d.name,max(salary) as max_salary
+from department d 
+join employee e on d.id =  e.departmentid
+group by 1,2) as t1
+on e.departmentid = t1.id
+where t1.max_salary = e.salary
+
+---write by myself , mysql, use subquery table join employee table
+select t1.name as department, e.name as employee,e.salary
+from 
+(select d.id,d.name,max(salary) as max_salary
+from department d 
+join employee e on d.id =  e.departmentid
+group by 1,2) as t1
+join employee e
+on t1.id = e.departmentid 
+where t1.max_salary = e.salary
+
+
+write by myself 01/12/2020
+
+select tp1.name as department, e.name as employee, e.salary as salary
+from employee e
+join(
+select e.departmentid, d.name, max(salary) as max_salary
+from employee e
+join department d on e.departmentid = d.id
+group by 1,2) as tp1  where e.salary = tp1.max_salary and e.departmentid = tp1.departmentid
+
+
+---614. Second Degree Follower
+--- write by my self and see the solution in the discuss 
+select followee as follower, count( distinct follower) as num
+from follow
+where followee in (select distinct follower from follow)
+group by 1
+
+---534. Game Play Analysis III
+---write by myself
+
+select a1.player_id, a1.event_date,sum(a2.games_played) as games_played_so_far 
+from activity a1
+join activity a2 on a1.player_id = a2.player_id and a1.event_date >= a2.event_date
+group by 1,2
+
+
+---550. Game Play Analysis IV
+--- write by myself  写的时候忘记第一个日期怎么算了，看了discuss 才想起用min()
+select round((
+(
+select count(a1.player_id) 
+from activity a1
+join (select player_id,min(event_date) as first_day
+from activity
+group by 1) as t1
+on a1.player_id = t1.player_id and a1.event_date = date_add(t1.first_day,interval 1 day)
+)
+/
+(select count(distinct player_id) from activity)
+), 2) as fraction
+
+---570. Managers with at Least 5 Direct Reports
+---write by myself, 以前都是在e1.name后面count（e2.namagerid),然后再重新select一下，这次试了一下
+---可以直接不用在select里count，直接用group by ,然后 having
+select e1.name
+from employee e1
+join employee e2 on e1.id = e2.managerid
+group by 1
+having count(e2.managerid) >=5
+
+---write by myself , 这个我就在select 里加了count, 然后再重新select.
+select name 
+from(
+select e1.name,count(e2.managerid) 
+from employee e1
+join employee e2 on e1.id = e2.managerid
+group by 1
+having count(e2.managerid) >=5) as t1
+
+---write by myself, MS SQL
+with t1 as (
+select e1.name,count(e2.managerid) as cnst
+from employee e1
+join employee e2 on e1.id = e2.managerid
+group by e1.name
+having count(e2.managerid) >=5
+
+)
+select name 
+from t1

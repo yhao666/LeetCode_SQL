@@ -1,0 +1,102 @@
+--Q196 Delete Duplicate Emails
+
+--schema by myself 
+drop table if exists yhao_person;
+create table yhao_person(id int, email varchar(60));
+
+insert into yhao_person(id,email) 
+values 
+(1,'john@example.com'),
+(2,'bob@example.com'),
+(3,'john@example.com')
+;
+
+select * from yhao_person;
+
+--- answer by myself,不知道哪错了，应该是对的。在rextester上就对，leetcode上就不对。
+---看题目，下面写了，要用DELETE STATEMENT
+
+select id,email
+from person 
+where (id,email) not in (select p1.id as id,p1.email as email
+from person p1
+join person p2 on p1.email = p2.email and p1.id>p2.id)
+
+--answer by myself 
+DELETE p1
+FROM person p1 join
+     person p2
+on p1.email = p2.email and p1.id>p2.id
+
+---answer by RodneyShag
+DELETE p1
+FROM person p1,
+     person p2
+WHERE p1.email = p2.email and p1.id>p2.id
+
+
+---Q197 Rising Temperature
+write bymyself
+
+SELECT w2.Id
+FROM Weather w1
+join Weather w2 on w2.temperature > w1.temperature and DATE_ADD(w2.RecordDate, INTERVAL -1 DAY) = w1.RecordDate
+
+
+---Q511 Game Play Analysis I
+--write by myself
+select player_id , min(event_date) as first_login
+from activity 
+group by 1
+order by 1;
+
+
+---Q512 Game Play Analysis II
+---write by myself
+SELECT act.player_id,act.device_id
+FROM Activity act
+JOIN (SELECT player_id,min(event_date) as event_date
+FROM Activity
+group by 1) AS temp1 on act.player_id = temp1.player_id and act.event_date = temp1.event_date
+;
+
+---Q577 Employee Bonus
+
+--SULUTION
+
+SELECT
+    Employee.name, Bonus.bonus
+FROM
+    Employee
+        LEFT JOIN
+    Bonus ON Employee.empid = Bonus.empid
+WHERE
+    bonus < 1000 or bonus is null
+;
+
+
+---Q584. Find Customer Referee
+
+---write by myself
+select name
+from customer
+where referee_id != 2 or referee_id is null
+
+---586. Customer Placing the Largest Number of Orders
+---write by myself
+select customer_number
+from
+(select customer_number,count(*) as cnt
+from orders
+group by 1
+order by 2 desc
+) as t1
+limit 1
+
+
+---SOLUTION
+select customer_number
+from orders
+group by 1
+order by COUNT(*) desc
+limit 1

@@ -1,0 +1,177 @@
+---614. Second Degree Follower
+---write by myself，后改对了，开始写成之后那样。 这里subquery里的distinct去掉也对。。
+
+select followee as follower, count(distinct follower) as num
+from follow
+where followee in (select distinct follower from follow)
+group by 1
+order by 1
+
+---write by myself开始写成下面这样， 报错。run成功，submit结果错误。应该是因为follower对followee的follow 可能有重复。 
+
+select followee as follower, count(followee) as num
+from follow
+where followee in (select distinct follower from follow)
+group by followee
+
+---626. Exchange Seats
+---这个是看到的简洁的答案,而且速度很快。
+
+select case when mod(id,2) = 1 and id < (select count(*) from seat) then id + 1
+            when mod(id,2) = 0 then id - 1
+            else id end as id,
+       student
+       
+from seat
+order by id
+
+都是看了答案之后才有想法自己写出来的，自己最初的想法是用self join.
+--- write by myself , 这里count(id), count(*)都对。
+select (case when id%2 = 1 and id != (select count(id) from seat) then id+1
+            when id%2 = 1 and id = (select count(*) from seat) then id
+            when id%2 = 0 then id -1 end) as id, student
+from seat
+order by 1
+
+---write by myself , 这里把id%2, 换成了mod(id,2). 一回事
+select (case when mod(id,2) = 1 and id != (select count(id) from seat) then id+1
+            when mod(id,2) = 1 and id = (select count(id) from seat) then id
+            when mod(id,2) = 0 then id -1 end) as id, student
+from seat
+order by 1
+
+--- write by myself ,这里最后一句when , 直接用else，运行速度快了很多。
+select (case when mod(id,2) = 1 and id != (select count(id) from seat) then id+1
+            when mod(id,2) = 1 and id = (select count(id) from seat) then id
+            else id -1 end) as id, student
+from seat
+order by 1
+
+---write by myself , here, count(id) can be replaced by max(id),gave same results
+select (case when mod(id,2) = 1 and id != (select max(id) from seat) then id+1
+            when mod(id,2) = 1 and id = (select max(id) from seat) then id
+            else id -1 end) as id, student
+from seat
+order by 1
+
+---1045. Customers Who Bought All Products
+
+---write by myself
+select customer_id
+from
+(
+select distinct c.customer_id,c.product_key
+from customer c
+join product p on c.product_key = p.product_key
+group by 1,2) as tp
+group by 1
+having count(customer_id) = (select count(product_key) from product )
+
+---write by myself, it runs slower than above, may because customer table has more data than product table when execute the last statement
+
+select customer_id
+from
+(
+select distinct c.customer_id,c.product_key
+from customer c
+join product p on c.product_key = p.product_key
+group by 1,2) as tp
+group by 1
+having count(customer_id) = (select count(distinct product_key) from customer ) 
+
+---write by myself  , 跟第一种方法一样，但是没用having,但是需要多写个子句
+
+select customer_id
+from(
+select customer_id, count(customer_id) as cnst
+from
+(
+select distinct c.customer_id,c.product_key
+from customer c
+join product p on c.product_key = p.product_key
+group by 1,2) as tp1
+group by 1) as tp2
+where cnst = (select count(distinct product_key) from customer )
+
+
+---1070. Product Sales Analysis III
+
+---write by myself, 刚开始忘记写了and s.product_id = tp.product_id，导致run正确，submit结果不正确。
+
+select s.product_id, s.year as first_year,s.quantity,s.price 
+from sales s
+join
+(
+select product_id,min(year) as first_year
+from sales 
+group by 1) as tp on s.year = tp.first_year and s.product_id = tp.product_id
+
+
+
+---1077. Project Employees III
+---write by myself, mysql version
+
+select p.project_id,p.employee_id
+from project p
+join employee e on p.employee_id = e.employee_id 
+join (select p.project_id, max(e.experience_years) as most_experienced
+      from project p
+      join employee e on p.employee_id = e.employee_id 
+      group by 1) as tp1
+      on p.project_id = tp1.project_id and e.experience_years = tp1.most_experienced
+	  
+--- write by myself, MS SQL Server
+
+select project_id,employee_id
+from(
+select p.project_id,p.employee_id,rank() over(partition by p.project_id order by e.experience_years desc) as rank
+from project p 
+join employee e on p.employee_id = e.employee_id) as tp1
+where rank = 1
+
+---1098. Unpopular Books
+---write by myself, running slowly
+
+select b.book_id,b.name
+from books b
+join
+(select b.book_id, ifnull(sum(o.quantity),0) as sold
+from books b
+left join orders o on b.book_id = o.book_id and (o.dispatch_date between date_add("2019-06-23", interval -1 year)
+                                                 and "2019-06-23")
+group by 1) as tp1
+on b.book_id = tp1.book_id and tp1.sold <10
+and b.available_from < date_add("2019-06-23", interval -1 month)
+
+
+---1107. New Users Daily Count
+---write by myself, if use 90 days, it will run ok,but submit fail, then I use 91 days, I do not know why,just have to use 91 days. 
+
+select first_login as login_date, count(user_id) as user_count
+from(
+select distinct user_id, min(activity_date) as first_login
+from traffic
+where activity = 'login'
+group by 1
+having first_login > date_sub("2019-06-30", interval 91 day)
+) as tp1
+group by 1
+order by 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

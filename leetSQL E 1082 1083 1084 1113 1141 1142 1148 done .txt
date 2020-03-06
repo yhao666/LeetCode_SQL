@@ -1,0 +1,125 @@
+1082. Sales Analysis I
+--- write by myself  这是个傻逼题，sales里的 price 是总的price，不是unit。所以sum(price)就行，不要sum(price*quantity).
+select seller_id
+from sales 
+group by 1
+having sum(price) = 
+(select sum(price) as smm
+ from sales
+ group by seller_id
+ order by sum(price) desc
+ limit 1)
+ 
+ ---1083. Sales Analysis II
+ 
+ ---write by myself
+select distinct buyer_id
+from 
+(select distinct s.buyer_id
+from sales s
+join product p on s.product_id = p.product_id
+where p.product_name = 'S8') as t1
+
+where buyer_id not in
+
+(select distinct s.buyer_id
+from sales s
+join product p on s.product_id = p.product_id
+where p.product_name = 'iphone')
+
+--- do not know why does not work, 几天之后的现在知道了，因为submit的数据集里面iphone 的product_id 不是3，是16. 
+ select distinct buyer_id
+from sales
+where product_id = 1 and buyer_id not in (select buyer_id
+                                            from sales
+                                            where product_id = 3)
+
+
+---1084. Sales Analysis III
+---write by myself 注意要加distinct, 否则报错。 注意 only sold in spring,所以要排除其他月份的。
+
+select distinct p.product_id,p.product_name
+from product p
+join sales s on p.product_id = s.product_id
+where s.sale_date between '2019-01-01' and '2019-03-31'
+and p.product_id not in 
+(
+select p.product_id
+from product p
+join sales s on p.product_id = s.product_id
+where s.sale_date < '2019-01-01' or s.sale_date > '2019-03-31'
+)
+
+---1113. Reported Posts
+
+---write by myself
+select report_reason,count(*) as report_count
+from(
+select distinct post_id, extra as report_reason
+from(
+select post_id, extra
+from actions
+where action = 'report' and action_date = '2019-07-04' and extra is not null) as t1) as t2
+group by 1
+
+---write by myself 对上面精简了一下，把t1 合并到了t2
+select report_reason,count(*) as report_count
+from(
+select distinct post_id, extra as report_reason
+from actions
+where action = 'report' and action_date = '2019-07-04' and extra is not null) as t1
+group by 1
+
+---discuss 里面的一个答案
+SELECT extra AS report_reason, COUNT(DISTINCT post_id) AS report_count
+FROM Actions
+WHERE action_date = DATE('2019-07-04') AND action = 'report'
+GROUP BY extra; 
+
+---1141. User Activity for the Past 30 Days I
+---write by myself 这里用user_id,如果用session_id 会通过run，fail在submit
+select activity_date as day,count(*) as active_users
+from( 
+select distinct user_id, activity_date
+from activity
+where (activity_date between date_sub('2019-07-27', interval 29 day) and '2019-07-27')
+      and activity_type is not null) as t1
+group by 1 
+order by 1
+
+
+--- 1142. User Activity for the Past 30 Days II
+--- write by myself
+select ifnull(round (count(session_id)/count(distinct user_id),2),0) as average_sessions_per_user
+from(
+select distinct user_id,session_id
+from activity
+where (activity_date between date_sub('2019-07-27', interval 29 day) and '2019-07-27')
+       and activity_type is not null) as t1
+
+
+---1148. Article Views I
+
+--write by myself
+select distinct author_id as id
+from views
+where author_id = viewer_id
+order by author_id ASC
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
